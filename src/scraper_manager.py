@@ -15,21 +15,37 @@ from src.models import JobStatus, Platform, ScrapedPost, ScrapeJob, ScrapeReques
 from src.api.webhooks import dispatch_webhook
 from src.scrapers.base import BaseScraper
 from src.scrapers.civic import CivicScraper
-from src.scrapers.instagram import InstagramScraper
 from src.scrapers.reddit import RedditScraper
-from src.scrapers.twitter import TwitterScraper
 from src.scrapers.youtube import YouTubeScraper
 
 logger = logging.getLogger(__name__)
 
 
 def get_scraper(platform: Platform, settings: Settings) -> BaseScraper:
-    """Factory: return the right scraper instance for a platform."""
+    """Factory: return the right scraper instance for a platform.
+    Prefers Playwright scrapers for Twitter/Instagram for reliability."""
+
+    if platform == Platform.TWITTER:
+        from src.scrapers.twitter_playwright import TwitterPlaywrightScraper
+        scraper = TwitterPlaywrightScraper(settings)
+        if scraper.is_configured():
+            return scraper
+        # Fallback to twscrape
+        from src.scrapers.twitter import TwitterScraper
+        return TwitterScraper(settings)
+
+    if platform == Platform.INSTAGRAM:
+        from src.scrapers.instagram_playwright import InstagramPlaywrightScraper
+        scraper = InstagramPlaywrightScraper(settings)
+        if scraper.is_configured():
+            return scraper
+        # Fallback to instaloader
+        from src.scrapers.instagram import InstagramScraper
+        return InstagramScraper(settings)
+
     scrapers: dict[Platform, type[BaseScraper]] = {
         Platform.REDDIT: RedditScraper,
         Platform.YOUTUBE: YouTubeScraper,
-        Platform.TWITTER: TwitterScraper,
-        Platform.INSTAGRAM: InstagramScraper,
         Platform.CIVIC: CivicScraper,
     }
     cls = scrapers.get(platform)

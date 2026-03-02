@@ -35,12 +35,15 @@ class Settings(BaseSettings):
     # ── YouTube Data API v3 ──────────────────────────────────────────────
     youtube_api_key: str = ""
 
-    # ── Twitter/X (twscrape) ─────────────────────────────────────────────
+    # ── Twitter/X (twscrape or Playwright) ────────────────────────────
     twitter_accounts: str = ""  # username:pass:email:email_pass per line
+    twitter_auth_token: str = ""  # browser cookie for Playwright fallback
+    twitter_ct0: str = ""  # browser cookie for Playwright fallback
 
-    # ── Instagram (instaloader) ──────────────────────────────────────────
+    # ── Instagram (instaloader or Playwright) ─────────────────────────
     instagram_username: str = ""
     instagram_password: str = ""
+    instagram_session_id: str = ""  # browser cookie for Playwright fallback
 
     # ── Webhook Integration ──────────────────────────────────────────────
     webhook_url: str = ""
@@ -63,11 +66,11 @@ class Settings(BaseSettings):
 
     @property
     def twitter_configured(self) -> bool:
-        return bool(self.twitter_accounts)
+        return bool(self.twitter_accounts or self.twitter_auth_token)
 
     @property
     def instagram_configured(self) -> bool:
-        return bool(self.instagram_username)
+        return True  # Playwright fallback always available
 
 
 @lru_cache

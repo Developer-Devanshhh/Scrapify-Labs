@@ -43,3 +43,9 @@ htmlcov/
 
 # Docker
 docker-compose.override.yml
+
+# Temporary injection scripts
+inject_*.py
+
+# Playwright browsers cache
+playwright/

@@ -55,15 +55,21 @@ class InstagramScraper(BaseScraper):
         )
 
         # Optional login for higher rate limits
-        if self.settings.instagram_username and self.settings.instagram_password:
+        if self.settings.instagram_username:
             try:
-                loader.login(
-                    self.settings.instagram_username,
-                    self.settings.instagram_password,
-                )
-                self.logger.info("Logged into Instagram as %s", self.settings.instagram_username)
-            except Exception as e:
-                self.logger.warning("Instagram login failed (continuing without): %s", e)
+                loader.load_session_from_file(self.settings.instagram_username)
+                self.logger.info("Loaded Instagram session from file for %s", self.settings.instagram_username)
+            except FileNotFoundError:
+                if self.settings.instagram_password:
+                    try:
+                        loader.login(
+                            self.settings.instagram_username,
+                            self.settings.instagram_password,
+                        )
+                        loader.save_session_to_file()
+                        self.logger.info("Logged into Instagram as %s", self.settings.instagram_username)
+                    except Exception as e:
+                        self.logger.warning("Instagram login failed (continuing without): %s", e)
 
         posts: list[ScrapedPost] = []
         per_keyword = max(max_results // max(len(keywords), 1), 5)

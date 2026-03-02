@@ -18,3 +18,7 @@ instaloader>=4.10.0
 # Parsing
 beautifulsoup4>=4.12.0
 lxml>=5.0.0
+
+# Browser-based scraping (Playwright stealth)
+playwright>=1.40.0
+playwright-stealth>=2.0.0
