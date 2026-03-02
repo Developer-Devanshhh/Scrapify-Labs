@@ -1,0 +1,20 @@
+version: "3.9"
+
+services:
+  scrapify:
+    build: .
+    container_name: scrapify-labs
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data          # Persist SQLite DB
+      - ./src:/app/src:ro         # Hot-reload in dev (read-only)
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
