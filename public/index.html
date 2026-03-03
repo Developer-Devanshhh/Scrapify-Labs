@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scrapify Labs v2 | Intelligence Portal</title>
+    <!-- Google Fonts for premium typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="background-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="glass-panel">
+            <div class="logo">
+                <i class="fa-solid fa-satellite-dish pulse-icon"></i>
+                <h1>Scrapify <span>Labs</span></h1>
+            </div>
+            <div class="status-indicator">
+                <span class="dot active"></span>
+                System Online
+            </div>
+        </header>
+
+        <!-- Main Content Split -->
+        <main class="dashboard">
+            <!-- Left Pane: Controls -->
+            <section class="controls-pane glass-panel">
+                <h2><i class="fa-solid fa-wand-magic-sparkles"></i> New Scrape Job</h2>
+                
+                <form id="scrape-form">
+                    <div class="form-group">
+                        <label for="keywords">Target Keywords (comma separated)</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="keywords" placeholder="e.g., pothole, water supply, smart city" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Target Platforms</label>
+                        <div class="platform-grid">
+                            <label class="platform-card">
+                                <input type="checkbox" name="platforms" value="civic" checked>
+                                <div class="card-content">
+                                    <i class="fa-solid fa-building-columns"></i>
+                                    <span>India Civic</span>
+                                </div>
+                            </label>
+                            <label class="platform-card">
+                                <input type="checkbox" name="platforms" value="twitter" checked>
+                                <div class="card-content">
+                                    <i class="fa-brands fa-x-twitter"></i>
+                                    <span>Twitter (X)</span>
+                                </div>
+                            </label>
+                            <label class="platform-card">
+                                <input type="checkbox" name="platforms" value="instagram">
+                                <div class="card-content">
+                                    <i class="fa-brands fa-instagram"></i>
+                                    <span>Instagram</span>
+                                </div>
+                            </label>
+                            <label class="platform-card">
+                                <input type="checkbox" name="platforms" value="facebook">
+                                <div class="card-content">
+                                    <i class="fa-brands fa-facebook-f"></i>
+                                    <span>Facebook</span>
+                                </div>
+                            </label>
+                            <label class="platform-card">
+                                <input type="checkbox" name="platforms" value="threads">
+                                <div class="card-content">
+                                    <i class="fa-brands fa-threads"></i>
+                                    <span>Threads</span>
+                                </div>
+                            </label>
+                            <label class="platform-card">
+                                <input type="checkbox" name="platforms" value="reddit">
+                                <div class="card-content">
+                                    <i class="fa-brands fa-reddit-alien"></i>
+                                    <span>Reddit</span>
+                                </div>
+                            </label>
+                             <label class="platform-card">
+                                <input type="checkbox" name="platforms" value="youtube">
+                                <div class="card-content">
+                                    <i class="fa-brands fa-youtube"></i>
+                                    <span>YouTube</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="max_results">Max Results per Platform</label>
+                        <div class="slider-wrapper">
+                            <input type="range" id="max_results" min="1" max="50" value="5" oninput="document.getElementById('slider-val').innerText = this.value">
+                            <span id="slider-val" class="slider-value">5</span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="primary-btn" id="submit-btn">
+                        <span>Initialize Scrape</span>
+                        <i class="fa-solid fa-rocket"></i>
+                    </button>
+                </form>
+            </section>
+
+            <!-- Right Pane: Results -->
+            <section class="results-pane glass-panel">
+                <div class="results-header">
+                    <h2><i class="fa-solid fa-database"></i> Live Intelligence Feed</h2>
+                    <button class="icon-btn" id="refresh-db-btn" title="Refresh Database">
+                        <i class="fa-solid fa-arrows-rotate"></i>
+                    </button>
+                </div>
+                
+                <div class="controls-bar">
+                    <select id="filter-platform" class="glass-select">
+                        <option value="all">All Platforms</option>
+                        <option value="civic">India Civic</option>
+                        <option value="twitter">Twitter</option>
+                        <option value="instagram">Instagram</option>
+                        <option value="facebook">Facebook</option>
+                        <option value="threads">Threads</option>
+                        <option value="reddit">Reddit</option>
+                        <option value="youtube">YouTube</option>
+                    </select>
+                </div>
+
+                <div class="feed-container" id="results-feed">
+                    <div class="empty-state">
+                        <div class="loader-ring"></div>
+                        <p>Awaiting intelligence data...</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Toast Notification System -->
+    <div id="toast-container"></div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

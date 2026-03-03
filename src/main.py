@@ -77,5 +77,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Serve Frontend UI
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import os
+
+public_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "public")
+if os.path.exists(public_dir):
+    app.mount("/static", StaticFiles(directory=public_dir), name="static")
+
+    @app.get("/")
+    async def serve_frontend():
+        """Serve the beautiful testing UI."""
+        return FileResponse(os.path.join(public_dir, "index.html"))
+
 # Mount all routes
 app.include_router(router)
