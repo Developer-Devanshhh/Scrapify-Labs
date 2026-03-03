@@ -45,6 +45,9 @@ class Settings(BaseSettings):
     instagram_password: str = ""
     instagram_session_id: str = ""  # browser cookie for Playwright fallback
 
+    # ── Apify (free tier — social media at scale) ─────────────────────────
+    apify_api_token: str = ""
+
     # ── Webhook Integration ──────────────────────────────────────────────
     webhook_url: str = ""
     webhook_secret: str = ""

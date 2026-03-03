@@ -22,3 +22,9 @@ lxml>=5.0.0
 # Browser-based scraping (Playwright stealth)
 playwright>=1.40.0
 playwright-stealth>=2.0.0
+
+# AI-powered web crawling (Crawl4AI)
+crawl4ai>=0.8.0
+
+# Apify SDK (free tier social media scraping)
+apify-client>=2.5.0

@@ -20,6 +20,7 @@ class Platform(str, Enum):
     YOUTUBE = "youtube"
     INSTAGRAM = "instagram"
     FACEBOOK = "facebook"
+    THREADS = "threads"
     CIVIC = "civic"
     OTHER = "other"
 

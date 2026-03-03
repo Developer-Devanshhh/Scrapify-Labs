@@ -17,36 +17,72 @@ from src.scrapers.base import BaseScraper
 from src.scrapers.civic import CivicScraper
 from src.scrapers.reddit import RedditScraper
 from src.scrapers.youtube import YouTubeScraper
+from src.scrapers.facebook import FacebookScraper
+from src.scrapers.threads import ThreadsScraper
 
 logger = logging.getLogger(__name__)
 
 
 def get_scraper(platform: Platform, settings: Settings) -> BaseScraper:
     """Factory: return the right scraper instance for a platform.
-    Prefers Playwright scrapers for Twitter/Instagram for reliability."""
+
+    Priority order:
+      1. Apify actors (if token is set — uses free $5/mo credits)
+      2. Playwright stealth (free, uses browser cookies)
+      3. Original library scrapers (twscrape, instaloader, etc.)
+    """
 
     if platform == Platform.TWITTER:
+        # Priority 1: Apify (scalable, maintained)
+        if settings.apify_api_token:
+            from src.scrapers.apify_twitter import ApifyTwitterScraper
+            return ApifyTwitterScraper(settings)
+        # Priority 2: Playwright stealth (free, uses cookies)
         from src.scrapers.twitter_playwright import TwitterPlaywrightScraper
         scraper = TwitterPlaywrightScraper(settings)
         if scraper.is_configured():
             return scraper
-        # Fallback to twscrape
+        # Priority 3: twscrape
         from src.scrapers.twitter import TwitterScraper
         return TwitterScraper(settings)
 
     if platform == Platform.INSTAGRAM:
+        # Priority 1: Apify
+        if settings.apify_api_token:
+            from src.scrapers.apify_instagram import ApifyInstagramScraper
+            return ApifyInstagramScraper(settings)
+        # Priority 2: Playwright stealth
         from src.scrapers.instagram_playwright import InstagramPlaywrightScraper
         scraper = InstagramPlaywrightScraper(settings)
         if scraper.is_configured():
             return scraper
-        # Fallback to instaloader
+        # Priority 3: instaloader
         from src.scrapers.instagram import InstagramScraper
         return InstagramScraper(settings)
 
+    if platform == Platform.FACEBOOK:
+        return FacebookScraper(settings)
+
+    if platform == Platform.THREADS:
+        return ThreadsScraper(settings)
+
+    if platform == Platform.CIVIC:
+        # Use Crawl4AI India civic scraper for richer results
+        from src.scrapers.india_civic import IndiaCivicScraper
+        return IndiaCivicScraper(settings)
+
+    if platform == Platform.REDDIT:
+        # Priority 1: Apify (no API keys needed!)
+        if settings.apify_api_token:
+            from src.scrapers.apify_reddit import ApifyRedditScraper
+            return ApifyRedditScraper(settings)
+        # Priority 2: PRAW (needs Reddit API keys)
+        return RedditScraper(settings)
+
+
+
     scrapers: dict[Platform, type[BaseScraper]] = {
-        Platform.REDDIT: RedditScraper,
         Platform.YOUTUBE: YouTubeScraper,
-        Platform.CIVIC: CivicScraper,
     }
     cls = scrapers.get(platform)
     if not cls:
@@ -59,12 +95,16 @@ def get_configured_platforms(settings: Settings | None = None) -> list[str]:
     settings = settings or get_settings()
     configured = []
 
+    has_apify = bool(settings.apify_api_token)
+
     checks = {
-        "reddit": settings.reddit_configured,
+        "twitter": settings.twitter_configured or has_apify,
+        "instagram": True,       # Playwright fallback always available
+        "facebook": True,        # Crawl4AI + Apify fallback
+        "threads": True,         # Crawl4AI + Apify fallback
         "youtube": settings.youtube_configured,
-        "twitter": settings.twitter_configured,
-        "instagram": True,  # Works without login for public data
-        "civic": True,      # Always available
+        "reddit": settings.reddit_configured or has_apify,
+        "civic": True,           # Crawl4AI always available
     }
 
     for name, is_ready in checks.items():
