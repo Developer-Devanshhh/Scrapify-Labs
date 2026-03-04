@@ -1,8 +1,29 @@
-# Scrapify Labs v2 🚀
+# Scrapify Labs v3 🚀
 
-A highly scalable, dual-engine web scraping microservice built for **Indian Public Portals & Governance Analysis**. 
+A highly scalable, AI-powered web scraping microservice built for **Indian Local Governance Intelligence**. 
 
-Scrapify v2 leverages a resilient 3-tier fallback architecture capable of fetching raw civic data and social media complaints at scale—running entirely on **$0 base cost**.
+Scrapify v3 upgrades the core scraper into a **geo-aware intelligence engine** that automatically categorizes citizen complaints, extracts coordinates, and summarizes issues using **Google Gemini 3.0 Flash**, running with maximum concurrency for minimal latency.
+
+![Governance Intelligence](https://raw.githubusercontent.com/Developer-Devanshhh/Scrapify-Labs/main/public/assets/UI-preview.png)
+
+---
+
+## ✨ New in v3: Governance Intelligence
+
+1. **🧠 AI Structuring (Gemini 3.0 Flash)**
+   Raw social media posts and civic grievances are automatically piped through Gemini to extract: `Category` (e.g. Infrastructure), `Urgency` (Critical/High), `Sentiment`, and structured summaries.
+   
+2. **📍 Geo-Tagging & Google Maps**
+   Added a dedicated **Google Places API** scraper that pulls reviews from local municipal offices, hospitals, and parks, injecting hard GPS `latitude`/`longitude` coordinates into the database.
+   
+3. **⚡ Concurrent Orchestrator (`asyncio.gather`)**
+   Scrapers no longer run one-by-one. A 7-platform intelligence sweep now completes in ~15 seconds instead of 60+ seconds.
+   
+4. **🏙️ City-Scoped Demo Mode**
+   Set `DEMO_CITY=Chennai` in your `.env` and all scrapers automatically refine their searches (e.g. converting "pothole" to "pothole Chennai") to drastically reduce noise.
+   
+5. **🎨 Premium Frontend UI**
+   A built-in glassmorphism dashboard (served natively from `/public`) to trigger scrapes, filter by platform, and view AI-enriched results with color-coded badges.
 
 ---
 
@@ -10,42 +31,38 @@ Scrapify v2 leverages a resilient 3-tier fallback architecture capable of fetchi
 
 ```mermaid
 graph TD
-    API[FastAPI Gateway] --> Manager[Scraper Manager]
+    API[FastAPI Gateway] --> Manager[Concurrent Scraper Manager]
     Manager --> P1[Apify Actors Cloud]
-    Manager --> P2[Playwright Stealth Local]
-    Manager --> P3[Native APIs / Libraries]
-
-    P1 --> |Social Media| Twitter
-    P1 --> |Social Media| Instagram
-    P1 --> |Social Media| Facebook
-    P1 --> |Social Media| Threads
-    P1 --> |Social Media| Reddit
-
-    P3 --> |Video| YouTube
+    Manager --> P2[Native APIs]
+    Manager --> P3[Crawl4AI Engine]
     
-    Manager --> C4[Crawl4AI Engine]
-    C4 --> |Gov HTML Parsing| Civic[Indian Civic Sites]
+    P1 --> |Social Media| Twitter/Meta/Reddit
+    P2 --> |Video| YouTube
+    P2 --> |Geo Data| GoogleMaps[Google Places API]
+    P3 --> |Gov HTML Parsing| Civic[Indian Civic Sites]
+    
+    P1 & P2 & P3 --> Gemini[Gemini 3.0 Pipeline]
+    Gemini --> |Structured Data| DB[(SQLite Database)]
+    DB --> UI[Glassmorphism Dashboard]
 ```
 
-### The 3-Tier Priority System
-Our orchestrator automatically routes requests to the most stable, cost-effective engine:
-1. **Priority 1: Apify SDK** — Cloud-based, rotating proxy actors that effortlessly bypass Twitter/Meta anti-bot walls. (Used if `APIFY_API_TOKEN` is set).
-2. **Priority 2: Playwright Stealth** — Local headless Chromium browser injecting your personal authentication cookies (fallback for social media).
-3. **Priority 3: Native / Libraries** — Fallback to direct APIs (PRAW for Reddit, API v3 for YouTube, or `twscrape`).
-
-### Crawl4AI ✨
-For unstructured, often-breaking Indian government websites (e.g., `data.gov.in`), we built native open-source headless browser extraction using **Crawl4AI**. It extracts main content without needing complex CSS selectors.
+### The Scraper Hierarchy
+1. **Google Maps (Places API)**: Unmatched hyper-local reviews.
+2. **Crawl4AI Engine**: Headless extraction of unstructured Indian `.gov.in` sites (MyGov, India Environment Portal).
+3. **Apify Cloud**: Free-tier rotating proxy actors to bypass social media walls without getting IP banned.
+4. **Native Fallbacks**: Playwright stealth mode and library wrappers (`twscrape`, PRAW).
 
 ---
 
 ## 📋 Configured Platforms
+- ✅ **Google Maps** (Places API)
+- ✅ **Civic** (Crawl4AI — `data.gov.in`, `SBM`, etc.)
 - ✅ **Twitter** (Apify / Playwright)
 - ✅ **Instagram** (Apify / Playwright)
-- ✅ **Facebook** (Apify / Crawl4AI)
-- ✅ **Threads** (Apify / Crawl4AI)
+- ✅ **Facebook** (Apify)
+- ✅ **Threads** (Apify)
 - ✅ **Reddit** (Apify / PRAW)
 - ✅ **YouTube** (Data API v3)
-- ✅ **Civic** (Crawl4AI — `data.gov.in`, `Smart Cities`, etc.)
 
 ---
 
@@ -66,41 +83,37 @@ Copy the template and fill in your keys:
 cp .env.example .env
 ```
 
-**Crucial Key for v2 Scale:**
-* `APIFY_API_TOKEN`: Get a free token at [Apify](https://console.apify.com/). The $5/mo free tier handles ~20,000 requests. Without this, Facebook and Threads will not work, and Twitter/Instagram will fall back to your fragile local cookies.
+**Crucial v3 Keys:**
+* `GEMINI_API_KEY`: For AI structuring (free from AI Studio).
+* `GOOGLE_MAPS_API_KEY`: For Places API reviews.
+* `APIFY_API_TOKEN`: $5/mo free tier handles ~20k social media requests completely bypassing bot-walls.
+* `DEMO_CITY`: Set to "Chennai", "Delhi", etc., to scope the orchestrator.
 
 ### 3. Run the Server
 ```bash
 uvicorn src.main:app --port 8000 --reload
 ```
-Access the Swagger UI at: `http://localhost:8000/docs`
+- Access the UI Dashboard: `http://localhost:8000/`
+- Access the Swagger API: `http://localhost:8000/docs`
 
 ---
 
-## 📊 API Usage
+## 📊 API Example
 
-**POST `/api/scrape`**
-Trigger a scraping job across multiple platforms simultaneously.
-```json
-{
-  "keywords": ["pothole", "water supply"],
-  "platforms": ["twitter", "civic", "youtube"],
-  "max_results": 10
-}
-```
-
-**GET `/api/results`**
-Retrieve normalized records from the local SQLite database.
+Trigger a scraping job:
 ```bash
-curl "http://localhost:8000/api/results?platform=civic&page_size=5"
+curl -X POST "http://localhost:8000/api/scrape" \
+     -H "Content-Type: application/json" \
+     -d '{"keywords": ["pothole"], "platforms": ["google_maps", "civic", "twitter"], "max_results": 5}'
 ```
 
 ---
 
 ## 💰 Cost Analysis
 * **Crawl4AI (Civic Sites):** $0 (Open-source, local)
-* **YouTube/Reddit APIs:** $0 (Free tiers)
-* **Apify (Social Media):** $0 Base ($5 free tier = ~20k posts). Scales infinitely for pennies per thousand posts.
+* **Google Gemini 3.0 Flash:** $0 (Free tier, 15 RPM)
+* **Google Maps API:** Covered completely by monthly free credits.
+* **Apify (Social Media):** $0 Base ($5 free tier = ~20k posts). 
 
 ---
 *Built for Developer-Devanshhh/Scrapify-Labs*
