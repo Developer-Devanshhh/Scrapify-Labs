@@ -1,10 +1,12 @@
 """
-Scrapify Labs — Scraper Manager
-Orchestrates scraper selection, execution, and result collection.
+Scrapify Labs — Scraper Manager v3
+Orchestrates scraper selection, concurrent execution, city-scoping,
+LLM structuring, and result collection.
 """
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import uuid
 from datetime import datetime
@@ -19,6 +21,7 @@ from src.scrapers.reddit import RedditScraper
 from src.scrapers.youtube import YouTubeScraper
 from src.scrapers.facebook import FacebookScraper
 from src.scrapers.threads import ThreadsScraper
+from src.scrapers.google_maps import GoogleMapsScraper
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +82,8 @@ def get_scraper(platform: Platform, settings: Settings) -> BaseScraper:
         # Priority 2: PRAW (needs Reddit API keys)
         return RedditScraper(settings)
 
-
+    if platform == Platform.GOOGLE_MAPS:
+        return GoogleMapsScraper(settings)
 
     scrapers: dict[Platform, type[BaseScraper]] = {
         Platform.YOUTUBE: YouTubeScraper,
@@ -105,6 +109,7 @@ def get_configured_platforms(settings: Settings | None = None) -> list[str]:
         "youtube": settings.youtube_configured,
         "reddit": settings.reddit_configured or has_apify,
         "civic": True,           # Crawl4AI always available
+        "google_maps": settings.google_maps_configured,
     }
 
     for name, is_ready in checks.items():
@@ -114,15 +119,53 @@ def get_configured_platforms(settings: Settings | None = None) -> list[str]:
     return configured
 
 
+def _scope_keywords(keywords: list[str], settings: Settings) -> list[str]:
+    """Prepend demo city name to keywords for city-focused scraping."""
+    city = settings.demo_city
+    if not city:
+        return keywords
+
+    scoped = []
+    for kw in keywords:
+        # Don't double-add city if user already included it
+        if city.lower() not in kw.lower():
+            scoped.append(f"{kw} {city}")
+        else:
+            scoped.append(kw)
+    return scoped
+
+
+async def _scrape_platform(
+    platform: Platform,
+    keywords: list[str],
+    max_results: int,
+    settings: Settings,
+) -> list[ScrapedPost]:
+    """Scrape a single platform. Used as a concurrent task."""
+    try:
+        scraper = get_scraper(platform, settings)
+        posts = await scraper.safe_scrape(
+            keywords=keywords,
+            max_results=max_results,
+        )
+        return posts
+    except ValueError as e:
+        logger.warning("Skipping platform: %s", e)
+        return []
+    except Exception as e:
+        logger.error("Scraper error for %s: %s", platform.value, e)
+        return []
+
+
 async def run_scrape_job(request: ScrapeRequest) -> ScrapeJob:
     """
     Execute a full scrape job across requested platforms.
 
-    1. Create job record
-    2. For each platform, run the scraper
-    3. Save results to DB
-    4. Fire wehook if configured
-    5. Update & return job record
+    v3 Improvements:
+    1. City-scoped keyword injection
+    2. Concurrent platform scraping (asyncio.gather)
+    3. Post-scrape LLM structuring via Gemini
+    4. Geo-tagged results
     """
     settings = get_settings()
     job_id = str(uuid.uuid4())[:8]
@@ -135,22 +178,32 @@ async def run_scrape_job(request: ScrapeRequest) -> ScrapeJob:
     )
     await save_job(job)
 
+    # Step 1: Scope keywords to demo city
+    scoped_keywords = _scope_keywords(request.keywords, settings)
+    logger.info(
+        "Job %s: scraping %d platforms with keywords %s",
+        job_id, len(request.platforms), scoped_keywords,
+    )
+
+    # Step 2: Run all platform scrapers CONCURRENTLY
+    tasks = [
+        _scrape_platform(platform, scoped_keywords, request.max_results, settings)
+        for platform in request.platforms
+    ]
+    results = await asyncio.gather(*tasks)
     all_posts: list[ScrapedPost] = []
+    for platform_posts in results:
+        all_posts.extend(platform_posts)
 
-    for platform in request.platforms:
+    # Step 3: LLM structuring (if Gemini is configured)
+    if settings.gemini_configured and all_posts:
         try:
-            scraper = get_scraper(platform, settings)
-            posts = await scraper.safe_scrape(
-                keywords=request.keywords,
-                max_results=request.max_results,
-            )
-            all_posts.extend(posts)
-        except ValueError as e:
-            logger.warning("Skipping platform: %s", e)
+            from src.llm.structurer import structure_posts
+            all_posts = await structure_posts(all_posts, settings)
         except Exception as e:
-            logger.error("Scraper error for %s: %s", platform.value, e)
+            logger.error("LLM structuring failed: %s", e)
 
-    # Persist results
+    # Step 4: Persist results
     new_count = await save_posts(all_posts)
 
     # Update job

@@ -48,6 +48,15 @@ class Settings(BaseSettings):
     # ── Apify (free tier — social media at scale) ─────────────────────────
     apify_api_token: str = ""
 
+    # ── Google Services ──────────────────────────────────────────────────
+    google_maps_api_key: str = ""       # Places API for reviews + geocoding
+    google_cse_api_key: str = ""        # Custom Search Engine API key
+    google_cse_id: str = ""             # Custom Search Engine ID
+    gemini_api_key: str = ""            # Gemini Flash for LLM structuring
+
+    # ── City-Scoped Demo ─────────────────────────────────────────────────
+    demo_city: str = ""                 # e.g. "Chennai" — scopes all scrapers
+
     # ── Webhook Integration ──────────────────────────────────────────────
     webhook_url: str = ""
     webhook_secret: str = ""
@@ -74,6 +83,14 @@ class Settings(BaseSettings):
     @property
     def instagram_configured(self) -> bool:
         return True  # Playwright fallback always available
+
+    @property
+    def google_maps_configured(self) -> bool:
+        return bool(self.google_maps_api_key)
+
+    @property
+    def gemini_configured(self) -> bool:
+        return bool(self.gemini_api_key)
 
 
 @lru_cache

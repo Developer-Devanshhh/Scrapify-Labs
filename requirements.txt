@@ -28,3 +28,6 @@ crawl4ai>=0.8.0
 
 # Apify SDK (free tier social media scraping)
 apify-client>=2.5.0
+
+# Google Gemini LLM (governance data structuring)
+# Uses REST API via httpx — no additional SDK needed

@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         filtered.forEach(item => {
-            const dateStr = new Date(item.published_at || item.created_at).toLocaleString();
+            const dateStr = new Date(item.timestamp || item.scraped_at).toLocaleString();
 
             // Icons matching
             const icons = {
@@ -123,30 +123,62 @@ document.addEventListener('DOMContentLoaded', () => {
                 'youtube': 'fa-youtube',
                 'facebook': 'fa-facebook-f',
                 'threads': 'fa-threads',
-                'reddit': 'fa-reddit-alien'
+                'reddit': 'fa-reddit-alien',
+                'google_maps': 'fa-map-location-dot'
             };
+            // Use fa-solid for civic and google_maps (they're not brand icons)
+            const solidIcons = ['civic', 'google_maps'];
+            const iconPrefix = solidIcons.includes(item.platform) ? 'fa-solid' : 'fa-brands';
             const icon = icons[item.platform] || 'fa-globe';
+
+            // Build structured data section if LLM has enriched it
+            let structuredHtml = '';
+            const sd = item.structured_data;
+            if (sd) {
+                const urgencyColors = {
+                    'critical': '#ef4444',
+                    'high': '#f97316',
+                    'medium': '#eab308',
+                    'low': '#22c55e'
+                };
+                const urgColor = urgencyColors[sd.urgency] || '#94a3b8';
+                structuredHtml = `
+                    <div class="structured-tags">
+                        ${sd.category ? `<span class="category-badge">${escapeHtml(sd.category)}</span>` : ''}
+                        ${sd.urgency ? `<span class="urgency-badge" style="background:${urgColor}20; color:${urgColor}; border-color:${urgColor}40">${sd.urgency.toUpperCase()}</span>` : ''}
+                        ${sd.sentiment ? `<span class="sentiment-badge">${sd.sentiment}</span>` : ''}
+                    </div>
+                    ${sd.summary ? `<div class="llm-summary"><i class="fa-solid fa-brain"></i> ${escapeHtml(sd.summary)}</div>` : ''}
+                `;
+            }
+
+            // Location & geo
+            let locationHtml = '';
+            if (item.location) {
+                locationHtml = `<span class="location-tag"><i class="fa-solid fa-location-dot"></i> ${escapeHtml(item.location)}</span>`;
+            }
 
             const card = document.createElement('div');
             card.className = 'result-card';
             card.innerHTML = `
                 <div class="card-header">
                     <div class="platform-badge ${item.platform}">
-                        <i class="fa-brands ${icon}"></i> 
-                        ${item.platform}
+                        <i class="${iconPrefix} ${icon}"></i> 
+                        ${item.platform.replace('_', ' ')}
                     </div>
                     <span class="timestamp">${dateStr}</span>
                 </div>
-                <div class="card-author">@${item.author || 'Unknown'}</div>
+                ${structuredHtml}
+                <div class="card-author">@${item.author || 'Unknown'} ${locationHtml}</div>
                 <div class="card-body">
                     ${escapeHtml(item.content)}
                 </div>
                 <div class="card-footer">
                     <div class="engagement">
-                        <span title="Likes"><i class="fa-regular fa-heart"></i> ${item.metadata?.likes || 0}</span>
+                        <span title="Rating"><i class="fa-solid fa-star"></i> ${item.metadata?.rating || item.metadata?.likes || '—'}</span>
                         <span title="Comments"><i class="fa-regular fa-comment"></i> ${item.metadata?.comments || item.metadata?.replies || 0}</span>
                     </div>
-                    ${item.url ? `<a href="${item.url}" target="_blank" class="icon-btn" style="display:flex; align-items:center; justify-content:center; text-decoration:none;"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>` : ''}
+                    ${item.source_url ? `<a href="${item.source_url}" target="_blank" class="icon-btn" style="display:flex; align-items:center; justify-content:center; text-decoration:none;"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>` : ''}
                 </div>
             `;
             feedContainer.appendChild(card);

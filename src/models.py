@@ -22,6 +22,7 @@ class Platform(str, Enum):
     FACEBOOK = "facebook"
     THREADS = "threads"
     CIVIC = "civic"
+    GOOGLE_MAPS = "google_maps"
     OTHER = "other"
 
 
@@ -44,9 +45,12 @@ class ScrapedPost(BaseModel):
     content: str = ""
     media_urls: list[str] = Field(default_factory=list)
     location: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
     timestamp: datetime | None = None
     scraped_at: datetime = Field(default_factory=datetime.utcnow)
     metadata: dict = Field(default_factory=dict)
+    structured_data: dict | None = None
     keywords: list[str] = Field(default_factory=list)
 
     @computed_field
