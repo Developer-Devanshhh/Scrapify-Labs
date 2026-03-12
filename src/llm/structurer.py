@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 # Gemini Flash API endpoint (REST, free tier: 15 RPM)
 GEMINI_API_URL = (
     "https://generativelanguage.googleapis.com/v1beta/models/"
-    "gemini-3.0-flash:generateContent"
+    "gemini-2.0-flash:generateContent"
 )
 
 

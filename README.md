@@ -116,4 +116,3 @@ curl -X POST "http://localhost:8000/api/scrape" \
 * **Apify (Social Media):** $0 Base ($5 free tier = ~20k posts). 
 
 ---
-*Built for Developer-Devanshhh/Scrapify-Labs*

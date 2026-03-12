@@ -23,6 +23,7 @@ class Platform(str, Enum):
     THREADS = "threads"
     CIVIC = "civic"
     GOOGLE_MAPS = "google_maps"
+    NEWS = "news"
     OTHER = "other"
 
 

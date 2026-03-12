@@ -57,6 +57,11 @@ class Settings(BaseSettings):
     # ── City-Scoped Demo ─────────────────────────────────────────────────
     demo_city: str = ""                 # e.g. "Chennai" — scopes all scrapers
 
+    # ── News Providers ──────────────────────────────────────────────────
+    gnews_api_key: str = ""
+    currents_api_key: str = ""
+    newsdata_api_key: str = ""
+
     # ── Webhook Integration ──────────────────────────────────────────────
     webhook_url: str = ""
     webhook_secret: str = ""

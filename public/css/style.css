@@ -22,6 +22,7 @@
     --color-youtube: #FF0000;
     --color-civic: #10b981;
     --color-google_maps: #34a853;
+    --color-news: #f59e0b;
 
     /* Geometry */
     --radius-lg: 20px;
@@ -347,6 +348,10 @@ input[type="text"]:focus {
     color: var(--color-google_maps);
 }
 
+.platform-card input[value="news"]:checked~.card-content i {
+    color: var(--color-news);
+}
+
 /* Slider */
 .slider-wrapper {
     display: flex;
@@ -577,6 +582,12 @@ input[type="range"]::-webkit-slider-thumb {
     background: rgba(52, 168, 83, 0.1);
     color: var(--color-google_maps);
     border-color: rgba(52, 168, 83, 0.3);
+}
+
+.platform-badge.news {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--color-news);
+    border-color: rgba(245, 158, 11, 0.3);
 }
 
 .timestamp {

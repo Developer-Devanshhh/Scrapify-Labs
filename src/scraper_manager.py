@@ -22,6 +22,7 @@ from src.scrapers.youtube import YouTubeScraper
 from src.scrapers.facebook import FacebookScraper
 from src.scrapers.threads import ThreadsScraper
 from src.scrapers.google_maps import GoogleMapsScraper
+from src.scrapers.news import NewsScraper
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +85,9 @@ def get_scraper(platform: Platform, settings: Settings) -> BaseScraper:
 
     if platform == Platform.GOOGLE_MAPS:
         return GoogleMapsScraper(settings)
+
+    if platform == Platform.NEWS:
+        return NewsScraper(settings)
 
     scrapers: dict[Platform, type[BaseScraper]] = {
         Platform.YOUTUBE: YouTubeScraper,
